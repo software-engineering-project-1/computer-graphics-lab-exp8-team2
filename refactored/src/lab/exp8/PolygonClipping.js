@@ -1,0 +1,308 @@
+importPackage(clipping);
+import java.util.*;
+
+import library.Point;
+import library.Polygon;
+PolygonClipping {
+
+	var ObjectLimit_x=500;
+	 var ObjectLimit_y=10;
+	Edge {Left, Right, Bottom, Top}; 
+	var[][] RenderPolygon=new var[ObjectLimit_x][ObjectLimit_y];
+	 var counter;
+	Point[] pOut=new Point[ObjectLimit_x];
+	
+	var cnt;
+
+	PolygonClipping()
+	{
+	        counter=0;
+	        for(var i=0;i<ObjectLimit_x;i++)
+	                for(var j=0;j<ObjectLimit_y;j++)
+	                {
+	                        RenderPolygon[i][j]=0;
+	                }
+	        for (var i=0;i<ObjectLimit_x;i++)
+	    	{
+	    		pOut[i]=new Point();
+	    	}
+	}
+	
+	 Point varersect(Point p1, Point p2, Edge b, var xmin,var ymin, var xmax, var ymax)
+	{
+	        var x1,y1,x2,y2,x = 0,y = 0;
+	        float m = 0;
+	        var[] coordinates=new var[3];
+	        p1.getCoordinates(coordinates);
+	        x1=coordinates[0]; y1=coordinates[1];
+	        p2.getCoordinates(coordinates);
+	        x2=coordinates[0]; y2=coordinates[1];
+	        
+	        if(x1!=x2)
+	        {
+	                m=(float) (((y1-y2)*1.0)/(x1-x2));
+	        }
+	        switch (b)
+	        {
+	                case Left:
+	                        x=xmin;
+	                        y=(var) (y2+((xmin - x2)*m));
+	                        //                      cout<<"in varersection "<<x<<y;
+	                        break;
+	                case Right:
+	                        x=xmax;
+	                        y=(var) (y2+((xmax - x2)*m));
+	                        break;
+	                case Bottom:
+	                        if(x1!=x2)
+	                                x=(var) (x2+((ymin - y2)/m));
+	                        else
+	                                x=x2;
+	                        y=ymin;
+	                        break;
+	                case Top:
+	                        if(x1!=x2)
+	                                x=(var) (x2+((ymax - y2)/m));
+	                        else
+	                                x=x2;
+	                        y=ymax;
+	                        break;
+
+	        }
+	
+    return (new Point(x,y));
+}
+
+	//Inside determines if a Point is inside or not wrt to a line. Return -1 if outside else returns 1
+	 var inside (Point p,Edge b,var xmin, var ymin, var xmax, var ymax )
+	{
+	        var x,y;
+	        var[] coordinates=new var[3];
+	        p.getCoordinates(coordinates);
+	        x=coordinates[0]; y=coordinates[1];
+	        
+	        switch(b)
+	        {
+	                case Left: if(x<xmin)   return -1;      break;
+	                case Right:if(x>xmax)   return -1;      break;
+	                case Bottom:if(y<ymin)  return -1;      break;
+	                case Top:if(y>ymax)     return -1;      break;
+	        }
+	        return 1;
+	}
+	 var cross(Point p1, Point p2, Edge eb, var xmin,var ymin, var xmax, var ymax)
+	{
+	        //Edge from p1 tp p2;
+	        var a=inside(p1,eb,xmin,ymin,xmax,ymax);
+	        var b=inside(p2,eb,xmin,ymin,xmax,ymax);
+	        if((a==-1)&&(b==-1))
+	        {
+	                return 4;
+	        }
+	        else if((a==-1)&&(b==1))
+	        {
+	                return 1;
+	        }
+	        else if((a==1)&&(b==1))
+	        {
+	                return 2;
+	        }
+	        else if((a==1)&&(b==-1))
+	        {
+	                return 3;
+	        }
+	        return 0;
+
+	}
+	
+
+
+	 ReturnClipPoly ClipPoint(Point p, Edge b, var xmin, var ymin, var xmax, var ymax, Point s )
+	{
+	        Point iPt;
+	        var retValue=0;
+	        retValue= cross(s,p,b,xmin,ymin,xmax,ymax); //*s -> p is the direction of the edge
+	        if(retValue==1)
+	        {
+	                //From out to in
+	                iPt=varersect(s,p,b,xmin,ymin,xmax,ymax);
+	                pOut[cnt]=iPt;
+	                (cnt)++;
+	                pOut[cnt]=p;
+	                (cnt)++;
+	        }
+	        if(retValue==2)
+	        {
+	                //From in to in
+	                pOut[cnt]=p;
+	                (cnt)++;
+	        }
+	        if(retValue==3)
+	        {
+	                //From in to out
+	                iPt=varersect(s,p,b,xmin,ymin,xmax,ymax);
+	                pOut[cnt]=iPt;
+	                (cnt)++;
+	        }
+	        if(retValue==4)
+	        {
+	                //From out to out
+	        }
+	        s=p;
+	        ReturnClipPoly RCP = null;
+	        RCP = new ReturnClipPoly();
+	       
+	        RCP.scopy=s;
+	        RCP.retCopy=retValue;
+	        return RCP;
+	}
+	void savePoint(var a, var b,var c ,var d, var e, var f, var g)
+	{
+	                RenderPolygon[counter][0]=a;RenderPolygon[counter][1]=b;RenderPolygon[counter][2]=c;RenderPolygon[counter][3]=d;
+	                RenderPolygon[counter][4]=e;RenderPolygon[counter][5]=f;RenderPolygon[counter][6]=g;counter++;
+	}
+
+	void  saveData(var choice, Point p,var offset)
+	{
+	        var x1 = 0,y1 = 0,x2 = 0,y2 = 0;
+	        var[] coordinates=new var[3];
+	        if(choice==1)
+	        {
+	 	        pOut[cnt-1].getCoordinates(coordinates);
+	 	        x1=coordinates[0]; y1=coordinates[1];
+	 	        pOut[cnt-2].getCoordinates(coordinates);
+	 	        x2=coordinates[0]; y2=coordinates[1];
+	        	    
+	        }
+	        if(choice==2 || choice ==3)
+	        {
+	        		p.getCoordinates(coordinates);
+		 	        x1=coordinates[0]; y1=coordinates[1];
+		 	        pOut[cnt-1].getCoordinates(coordinates);
+		 	        x2=coordinates[0]; y2=coordinates[1];
+	                
+	        }
+	        savePoint(1+offset,2,x1,y1,x2,y2,0);
+	}
+
+	 Edge lookUpEdge (var valueEdge) {  
+	        return Edge.values()[valueEdge];  
+	    }  
+	
+	 var[][] Clip(Polygon Cp ,Polygon P)
+	{
+	        var i = 0,n;
+	        var xmin,xmax,ymin,ymax;
+	        var x1,y1,x2,y2;
+	        //Get the number of Vertices in Polygon to be clipped.
+	        n= Cp.getVertexCount();
+	        var[] coordinates=new var[3];
+	        ReturnClipPoly RCP = null;
+	        RCP = new ReturnClipPoly();
+	        
+	        
+	        Point first, s,temp;
+	        first=new Point(0,0);
+	        s=new Point(0,0);
+	        temp=new Point(0,0);
+	        // First processed Point and s has recent Points
+	        
+	        var[] Boundary=new var [4];
+			P.getRectangleBoundary(Boundary);
+			xmin=Boundary[0];xmax=Boundary[1];ymin=Boundary[2];ymax=Boundary[3];
+			
+	        Point[] pIn=new Point[ObjectLimit_x];
+	        for (i=0;i<ObjectLimit_x;i++)
+	    	{
+	    		pIn[i]=new Point();
+	    	}
+	        // Get the vertices and store it in pIn array 
+	        Vector <Point> vertex=Cp.getVerticesInOrder();
+	        ListIterator<Point> iter= vertex.listIterator();
+	        var retValue;
+	        i=0;
+	        while (iter.hasNext()) 
+	        {
+	                pIn[i]=(Point) iter.next();  
+	                i++;
+	        }
+	        var run=0;
+	        for(run=0;run<=4;run++)
+	        {
+	                cnt=0;
+	                //Prvar the Points entered by user.
+	                for (i=0;i<n;i++)
+	                {
+
+	        	        pIn[i].getCoordinates(coordinates);
+	        	        x1=coordinates[0]; y1=coordinates[1];
+	                        
+	                        savePoint(0,x1,y1, 0, 0, 0, 0);
+	                        console.log(i+" "+n+" "+x1+" "+y1);
+
+	                }
+	                if(run==4) break;
+	                first=pIn[0];
+	                s=pIn[0];
+	                for(i=1;i<=n;i++)
+	                {
+	                        temp=s;
+	                        s.getCoordinates(coordinates);
+		        	        x1=coordinates[0]; y1=coordinates[1];
+		                      
+	                        
+	                        if(i!=n)
+	                        {
+	                        	pIn[i].getCoordinates(coordinates);
+	    	        	        x2=coordinates[0]; y2=coordinates[1];
+	    	        	        
+	    	        	        
+	                                RCP=ClipPoint(pIn[i],lookUpEdge(run),xmin,ymin,xmax,ymax,s);
+	                                retValue=RCP.retCopy;
+	                               // pOut=RCP.pOutcopy;
+	                                s=RCP.scopy;
+	                                //cnt=RCP.cntcopy;
+	                        }
+	                        else
+	                        {
+	                        	 first.getCoordinates(coordinates);
+	 		        	        x2=coordinates[0]; y2=coordinates[1];
+	 		                      
+	                                RCP=ClipPoint(first,lookUpEdge(run),xmin,ymin,xmax,ymax,s);
+	                                retValue=RCP.retCopy;
+	                               // pOut=RCP.pOutcopy;
+	                                s=RCP.scopy;
+	                                //cnt=RCP.cntcopy;
+	                        }
+	                        savePoint(1+run,1,x1,y1,x2,y2, 0);
+	                        saveData(retValue,temp,run);
+	                }
+	                for (i=0;i<cnt;i++)
+	                {
+	                        //pOut[i].getPoint(x1,y1);
+	                        //savePoint(3,1,x1,y1);
+	                        pIn[i]=pOut[i];
+	                }
+	                n=cnt;
+	        }
+	        savePoint(-2, 0, 0, 0, 0, 0, 0);
+	       console.log();
+	        //Point pt;
+	        console.log("Polycounter object");
+	                for (i=0;i<counter;i++)
+	                {
+	                        console.log(i+" "+RenderPolygon[i][0]+" "+RenderPolygon[i][1]+" "+RenderPolygon[i][2]+" "+RenderPolygon[i][3]+" "+RenderPolygon[i][4]+" "+RenderPolygon[i][5]+" "+RenderPolygon[i][6]);
+	                }
+	        //drawclippoly(xmin,xmax,ymin,ymax,RenderPolygon,counter);
+	        //free(pIn);
+	                return RenderPolygon;
+	        }
+	   
+}
+
+ ReturnClipPoly
+    {
+    	Point scopy;
+    	var retCopy;
+    }
+
